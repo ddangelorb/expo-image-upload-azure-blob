@@ -19,7 +19,35 @@ export default () => {
           initialValues={{
             images: []
           }}
-          onSubmit={(values) => { console.log(values) }}
+          onSubmit={(values) => {
+            console.log("Img Submit");
+            console.log(values);
+            console.log("First Img");
+            console.log(values.images[0]);
+
+            let localUri = values.images[0];
+            console.log("localUri: " + localUri);
+            let filename = localUri.split('/').pop();
+            console.log("filename: " + filename);
+
+            // Infer the type of the image
+            let match = /\.(\w+)$/.exec(filename);
+            let type = match ? `image/${match[1]}` : `image`;
+            console.log("type: " + type);
+
+            let formData = new FormData();
+            // Assume "photo" is the name of the form field the server expects
+            formData.append('photo', { uri: localUri, name: filename, type });
+
+            /*
+            let r = await fetch('YOUR_SERVER_URL', {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'content-type': 'multipart/form-data',
+              },
+            });*/
+          }}
         >
           <FormImagePicker backgroundColor={colors.primary} name="images" />
           <View paddingVertical={24}>
