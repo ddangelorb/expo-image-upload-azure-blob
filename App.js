@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { create } from 'apisauce';
 
 import React from 'react';
 import { StyleSheet, View, ScrollView, Button } from 'react-native';
@@ -35,18 +36,72 @@ export default () => {
             let type = match ? `image/${match[1]}` : `image`;
             console.log("type: " + type);
 
+            const api = create({
+              baseURL: 'https://<>.blob.core.windows.net',
+            });
+
             let formData = new FormData();
             // Assume "photo" is the name of the form field the server expects
             formData.append('photo', { uri: localUri, name: filename, type });
 
+            console.log("starting await block");
+
+            (async () => {
+              console.log("log from async block");
+              try {
+                let token = 'g33Vbwphe/6BNoR7PWRucZxHFqRtCyP6WXliLBxSGSSd5pLDXDJzsa5V4CXF+WWZ6qES/1RNgKyjdh9uNs74bQ==';
+                console.log("about to send the response");
+                const response = await api.post(
+                  '/wpdblob',
+                  formData,
+                  {
+                    headers: {
+                      'Authorization': 'Bearer ' + token,
+                      'content-type': 'multipart/form-data'
+                    }
+                  }
+                );
+                console.log("response sent!");
+                console.log("POST return: " + response);
+              }
+              catch (error) {
+                console.log("error: " + error);
+              }
+            })()
+
+            /*async () => {
+              try {
+                let token = '';
+                console.log("about to send the response");
+                const response = await api.post(
+                  '/wpdblob',
+                  formData,
+                  {
+                    headers: {
+                      'Authorization': 'Bearer ' + token,
+                      'content-type': 'multipart/form-data'
+                    }
+                  }
+                );
+                console.log("response sent!");*/
+
             /*
-            let r = await fetch('YOUR_SERVER_URL', {
+            let r = await fetch('https://<>.blob.core.windows.net', {
               method: 'POST',
               body: formData,
               headers: {
+                'Authorization': 'Bearer ' + token,
                 'content-type': 'multipart/form-data',
               },
             });*/
+            /*console.log("POST return: " + response);
+          }
+          catch (error) {
+            console.log("error: " + error);
+          }
+        }*/
+
+            console.log("finishing await block");
           }}
         >
           <FormImagePicker backgroundColor={colors.primary} name="images" />
@@ -58,7 +113,7 @@ export default () => {
           title="Download"
           onPress={async () => {
             const data = await FileSystem.downloadAsync(
-              'https://wpdstorageaccounths.blob.core.windows.net/wpdblob/image_test_20211015_104400.png',
+              'https://<>.blob.core.windows.net/t.png',
               FileSystem.documentDirectory + 'image_test_20211015_104400.png',
               {
                 sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
