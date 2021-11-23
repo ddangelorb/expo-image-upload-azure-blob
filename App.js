@@ -1,6 +1,8 @@
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { create } from 'apisauce';
+import apiA from './apiA';
+import { decode as atob, encode as btoa } from 'base-64'
 
 import React from 'react';
 import { StyleSheet, View, ScrollView, Button } from 'react-native';
@@ -36,33 +38,75 @@ export default () => {
             let type = match ? `image/${match[1]}` : `image`;
             console.log("type: " + type);
 
+            console.log("Full URL: " + 'https://wpdstorageaccounths.blob.core.windows.net/wpdblob/' + filename);
             const api = create({
-              baseURL: 'https://<>.blob.core.windows.net',
+              baseURL: 'https://wpdstorageaccounths.blob.core.windows.net',
             });
+
+            //get the current date
+            var currentdate = new Date();
+            console.log("currentdate: " + currentdate);
+            var Curr_date = currentdate.getDay + '-' + currentdate.getMonth + '-' + currentdate.getFullYear;
+            console.log("Curr_date: " + Curr_date);
 
             let formData = new FormData();
             // Assume "photo" is the name of the form field the server expects
             formData.append('photo', { uri: localUri, name: filename, type });
+            var data = btoa(formData);
+
+            const urlApiA = 'https://wpdstorageaccounths.blob.core.windows.net/wpdblob/' + filename;
+            //const urlApiA = 'https://wpdstorageaccounths.blob.core.windows.net/wpdblob';
+            console.log("urlApiA: " + urlApiA);
+
+            console.log("*** Will now try to send data thru AXIOS! ***");
+            apiA.put(urlApiA, data, {
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+                "Access-Control-Allow-Headers": "Origin, Content-Type, x-ms-*",
+                "Content-Type": "image/jpg",
+                "Content-Length": data.length, //here I am trying to get the size of image.
+                "x-ms-date": Curr_date,
+                "x-ms-version": "2017-11-09",
+                "x-ms-blob-type": "BlockBlob",
+              }
+            })
+              .then(response => { console.log(response); console.log('correct!!'); })
+              .catch(error => { console.log(error); console.log('error here!!'); });
+            console.log("*** END - data sent thru AXIOS! ***");
 
             console.log("starting await block");
+            //https://github.com/blazerroadg/react-native-azure-blob-storage/blob/master/azurblobstorage.ts
 
+            //https://github.com/watanabeyu/react-native-simple-twitter
+            //https://betterprogramming.pub/build-your-very-own-react-component-library-and-publish-it-to-github-package-registry-192a688a51fd
             (async () => {
               console.log("log from async block");
               try {
-                let token = 'g33Vbwphe/6BNoR7PWRucZxHFqRtCyP6WXliLBxSGSSd5pLDXDJzsa5V4CXF+WWZ6qES/1RNgKyjdh9uNs74bQ==';
+                let token = '';
                 console.log("about to send the response");
-                const response = await api.post(
-                  '/wpdblob',
+                const response = await api.put(
+                  '/wpdblob/' + filename,
                   formData,
                   {
                     headers: {
-                      'Authorization': 'Bearer ' + token,
-                      'content-type': 'multipart/form-data'
+                      "Access-Control-Allow-Origin": "*",
+                      'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+                      "Access-Control-Allow-Headers": "Origin, Content-Type, x-ms-*",
+                      "Content-Type": "multipart/form-data",
+                      "Content-Length": data.length, //here I am trying to get the size of image.
+                      "x-ms-date": Curr_date,
+                      "x-ms-version": "2017-11-09",
+                      "x-ms-blob-type": "BlockBlob"//,
+                      //'Authorization': token,
+                      //'content-type': 'multipart/form-data',
+                      //'x-ms-version': '2017-11-09'
                     }
                   }
                 );
                 console.log("response sent!");
-                console.log("POST return: " + response);
+                console.log("POST response: " + response);
+                console.log(response.data)
               }
               catch (error) {
                 console.log("error: " + error);
@@ -71,33 +115,33 @@ export default () => {
 
             /*async () => {
               try {
-                let token = '';
-                console.log("about to send the response");
-                const response = await api.post(
-                  '/wpdblob',
-                  formData,
-                  {
-                    headers: {
-                      'Authorization': 'Bearer ' + token,
-                      'content-type': 'multipart/form-data'
+          let token = '';
+        console.log("about to send the response");
+        const response = await api.post(
+        '/wpdblob',
+        formData,
+        {
+          headers: {
+          'Authorization': 'Bearer ' + token,
+        'content-type': 'multipart/form-data'
                     }
                   }
-                );
-                console.log("response sent!");*/
+        );
+        console.log("response sent!");*/
 
             /*
-            let r = await fetch('https://<>.blob.core.windows.net', {
-              method: 'POST',
-              body: formData,
-              headers: {
-                'Authorization': 'Bearer ' + token,
-                'content-type': 'multipart/form-data',
+            let r = await fetch('https://wpdstorageaccounths.blob.core.windows.net', {
+          method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': 'Bearer ' + token,
+        'content-type': 'multipart/form-data',
               },
             });*/
             /*console.log("POST return: " + response);
           }
           catch (error) {
-            console.log("error: " + error);
+          console.log("error: " + error);
           }
         }*/
 
@@ -113,7 +157,7 @@ export default () => {
           title="Download"
           onPress={async () => {
             const data = await FileSystem.downloadAsync(
-              'https://<>.blob.core.windows.net/t.png',
+              'https://wpdstorageaccounths.blob.core.windows.net/wpdblob/image_test_20211015_104400.png',
               FileSystem.documentDirectory + 'image_test_20211015_104400.png',
               {
                 sessionType: FileSystem.FileSystemSessionType.BACKGROUND,
@@ -125,7 +169,7 @@ export default () => {
           }}
         />
       </ScrollView>
-    </View>
+    </View >
   );
 };
 
